@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spy Game - Food</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #1e3c72;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .setup-screen, .name-screen, .player-screen, .reveal-screen, .voting-screen, .results-screen {
+            display: none;
+        }
+
+        .setup-screen.active, .name-screen.active, .player-screen.active, .reveal-screen.active, .voting-screen.active, .results-screen.active {
+            display: block;
+        }
+
+        .player-count {
+            margin: 30px 0;
+        }
+
+        .player-count label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            color: #333;
+        }
+
+        .player-count input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2em;
+            border: 2px solid #1e3c72;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .name-input-container {
+            margin: 30px 0;
+        }
+
+        .name-input-container label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            color: #333;
+        }
+
+        .name-input-container input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2em;
+            border: 2px solid #1e3c72;
+            border-radius: 10px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 18px;
+            font-size: 1.3em;
+            font-weight: bold;
+            background: #1e3c72;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: #2a5298;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-secondary {
+            background: #48bb78;
+        }
+
+        .btn-secondary:hover {
+            background: #38a169;
+        }
+
+        .btn-danger {
+            background: #f56565;
+        }
+
+        .btn-danger:hover {
+            background: #e53e3e;
+        }
+
+        .role-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 30px 0;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            color: white;
+        }
+
+        .role-card.spy {
+            background: linear-gradient(135deg, #f56565 0%, #c53030 100%);
+        }
+
+        .role-card h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+
+        .role-card .location {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .role-card .role {
+            font-size: 1.5em;
+            margin-top: 10px;
+            opacity: 0.9;
+        }
+
+        .hidden-card {
+            background: #333;
+            padding: 60px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 30px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .hidden-card:hover {
+            background: #444;
+            transform: scale(1.02);
+        }
+
+        .hidden-card h3 {
+            color: white;
+            font-size: 1.8em;
+        }
+
+        .player-info {
+            text-align: center;
+            font-size: 1.3em;
+            color: #333;
+            margin: 20px 0;
+        }
+
+        .instructions {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #1e3c72;
+        }
+
+        .instructions h3 {
+            color: #1e3c72;
+            margin-bottom: 10px;
+        }
+
+        .instructions ul {
+            margin-left: 20px;
+            color: #555;
+        }
+
+        .instructions li {
+            margin: 8px 0;
+        }
+
+        .timer {
+            text-align: center;
+            font-size: 2em;
+            font-weight: bold;
+            color: #1e3c72;
+            margin: 20px 0;
+        }
+
+        .location-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .location-item {
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .reveal-info {
+            background: #f7fafc;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .reveal-info h2 {
+            color: #1e3c72;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+        }
+
+        .reveal-info .location {
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
+        }
+
+        .reveal-info .spy-was {
+            font-size: 1.3em;
+            color: #f56565;
+            margin-top: 15px;
+        }
+
+        .vote-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .vote-btn {
+            padding: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .vote-btn:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+        }
+
+        .scoreboard {
+            background: #f7fafc;
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .scoreboard h3 {
+            color: #1e3c72;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            margin: 8px 0;
+            background: white;
+            border-radius: 8px;
+            font-size: 1.1em;
+        }
+
+        .score-item.winner {
+            background: #48bb78;
+            color: white;
+            font-weight: bold;
+        }
+
+        .results-info {
+            background: #f7fafc;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .results-info h2 {
+            color: #1e3c72;
+            margin-bottom: 20px;
+        }
+
+        .results-info .correct-votes {
+            font-size: 1.3em;
+            color: #48bb78;
+            margin: 15px 0;
+        }
+
+        .results-info .wrong-votes {
+            font-size: 1.3em;
+            color: #f56565;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🕵️ Spy Game</h1>
+        <p class="subtitle">🍕 Food!</p>
+
+        <!-- Setup Screen -->
+        <div class="setup-screen active" id="setup-screen">
+            <div class="instructions">
+                <h3>How to Play:</h3>
+                <ul>
+                    <li>One player will be the SPY (they don't know the food)</li>
+                    <li>All other players know the secret food</li>
+                    <li>Take turns asking each other questions</li>
+                    <li>After 1 minute, vote on who you think the spy is</li>
+                    <li>Correct votes earn 50 points!</li>
+                </ul>
+            </div>
+
+            <div class="player-count">
+                <label for="player-input">How many players? (3-100)</label>
+                <input type="number" id="player-input" min="3" max="100" value="3">
+            </div>
+
+            <button class="btn" onclick="startGame()">Start Game</button>
+        </div>
+
+        <!-- Name Input Screen -->
+        <div class="name-screen" id="name-screen">
+            <div class="player-info">
+                <strong><span id="name-player-number">1</span></strong>
+            </div>
+            <div class="name-input-container">
+                <label for="name-input">Enter your name:</label>
+                <input type="text" id="name-input" placeholder="Your name...">
+            </div>
+            <button class="btn" onclick="saveName()">Continue</button>
+        </div>
+
+        <!-- Player Screen -->
+        <div class="player-screen" id="player-screen">
+            <div class="player-info">
+                <strong><span id="current-player">1</span></strong>
+            </div>
+            <div class="hidden-card" id="hidden-card" onclick="revealRole()">
+                <h3>👆 Tap to see your role</h3>
+                <p style="color: #aaa; margin-top: 10px;">Don't let others see!</p>
+            </div>
+            <div class="role-card" id="role-card" style="display: none;">
+                <h2 id="role-title">Your Role</h2>
+                <div class="location" id="role-location"></div>
+                <div class="role" id="role-subtitle"></div>
+            </div>
+            <button class="btn" id="next-btn" onclick="nextPlayer()" style="display: none;">Next Player</button>
+            <button class="btn btn-secondary" id="start-round-btn" onclick="startRound()" style="display: none;">Start Round!</button>
+        </div>
+
+        <!-- Reveal Screen -->
+        <div class="reveal-screen" id="reveal-screen">
+            <div class="timer" id="timer">1:00</div>
+            <div class="instructions">
+                <h3>All Possible Foods:</h3>
+                <div class="location-list" id="all-locations"></div>
+            </div>
+            <button class="btn btn-secondary" onclick="startVoting()">Start Voting!</button>
+        </div>
+
+        <!-- Voting Screen -->
+        <div class="voting-screen" id="voting-screen">
+            <h2 style="text-align: center; color: #1e3c72; margin-bottom: 20px;">🗳️ Who is the Spy?</h2>
+            <div class="player-info">
+                <strong><span id="voting-player">Player</span>, cast your vote:</strong>
+            </div>
+            <div class="vote-buttons" id="vote-buttons"></div>
+        </div>
+
+        <!-- Results Screen -->
+        <div class="results-screen" id="results-screen">
+            <div class="results-info">
+                <h2>🎉 Round Over!</h2>
+                <div class="spy-was"><span id="results-spy"></span> was the SPY!</div>
+                <div class="correct-votes" id="correct-votes"></div>
+                <div class="wrong-votes" id="wrong-votes"></div>
+            </div>
+
+
+            <div class="reveal-info">
+                <h2>The Food Was:</h2>
+                <div class="location" id="final-location"></div>
+                <div class="spy-was"><span id="spy-number"></span> was the SPY!</div>
+            </div>
+
+            <div class="scoreboard">
+                <h3>📊 Scoreboard</h3>
+                <div id="score-list"></div>
+            </div>
+            <button class="btn btn-secondary" onclick="playAgain()">Play Again</button>
+            <button class="btn" onclick="location.reload()">New Game (Reset Scores)</button>
+        </div>
+    </div>
+
+    <script>
+        const locations = [
+            'Pizza', 'Burger', 'Pasta', 'Sushi', 'Tacos', 'Sandwich', 'Salad', 'Steak', 'Chicken', 'Rice',
+            'Noodles', 'Soup', 'Bread', 'Cheese', 'Eggs', 'Bacon', 'Pancakes', 'Waffles', 'French Fries', 'Hot Dog',
+            'Burrito', 'Quesadilla', 'Nachos', 'Wings', 'Ribs', 'Meatballs', 'Lasagna', 'Ravioli', 'Spaghetti', 'Macaroni',
+            'Dumplings', 'Spring Rolls', 'Fried Rice', 'Curry', 'Pad Thai', 'Ramen', 'Pho', 'Bibimbap', 'Kebab', 'Falafel',
+            'Hummus', 'Gyro', 'Shawarma', 'Fish and Chips', 'Lobster', 'Shrimp', 'Crab', 'Oysters', 'Clam Chowder', 'Chili'
+        ];
+
+        let numPlayers = 5;
+        let currentPlayer = 1;
+        let spyPlayer = 0;
+        let secretLocation = '';
+        let timerInterval;
+        let timeLeft = 60;
+        let playerNames = [];
+        let nameInputIndex = 0;
+        let playerScores = {};
+        let currentVoter = 0;
+        let votes = {};
+
+        function startGame() {
+            numPlayers = parseInt(document.getElementById('player-input').value);
+            if (numPlayers < 3 || numPlayers > 100) { alert('Please choose between 3 and 100 players!'); return; }
+            if (playerNames.length === 0) {
+                nameInputIndex = 0;
+                document.getElementById('setup-screen').classList.remove('active');
+                document.getElementById('name-screen').classList.add('active');
+                document.getElementById('name-player-number').textContent = 1;
+                document.getElementById('name-input').focus();
+            } else { startNewRound(); }
+        }
+
+        function saveName() {
+            const nameInput = document.getElementById('name-input');
+            const name = nameInput.value.trim();
+            if (name === '') { alert('Please enter a name!'); return; }
+            playerNames.push(name);
+            playerScores[name] = 0;
+            nameInputIndex++;
+            if (nameInputIndex < numPlayers) {
+                document.getElementById('name-player-number').textContent = nameInputIndex + 1;
+                nameInput.value = '';
+                nameInput.focus();
+            } else { startNewRound(); }
+        }
+
+        function startNewRound() {
+            spyPlayer = Math.floor(Math.random() * numPlayers) + 1;
+            secretLocation = locations[Math.floor(Math.random() * locations.length)];
+            currentPlayer = 1; timeLeft = 60; votes = {};
+            document.getElementById('setup-screen').classList.remove('active');
+            document.getElementById('name-screen').classList.remove('active');
+            document.getElementById('results-screen').classList.remove('active');
+            document.getElementById('player-screen').classList.add('active');
+            updatePlayerDisplay();
+        }
+
+        function updatePlayerDisplay() {
+            document.getElementById('current-player').textContent = playerNames[currentPlayer - 1];
+            document.getElementById('hidden-card').style.display = 'block';
+            document.getElementById('role-card').style.display = 'none';
+            document.getElementById('next-btn').style.display = 'none';
+            document.getElementById('start-round-btn').style.display = 'none';
+        }
+
+        function revealRole() {
+            const roleCard = document.getElementById('role-card');
+            document.getElementById('hidden-card').style.display = 'none';
+            roleCard.style.display = 'flex';
+            if (currentPlayer === spyPlayer) {
+                roleCard.classList.add('spy');
+                document.getElementById('role-title').textContent = '🕵️ YOU ARE THE SPY!';
+                document.getElementById('role-location').textContent = '???';
+                document.getElementById('role-subtitle').textContent = 'Try to guess the food!';
+            } else {
+                roleCard.classList.remove('spy');
+                document.getElementById('role-title').textContent = '✓ You are NOT the spy';
+                document.getElementById('role-location').textContent = secretLocation;
+                document.getElementById('role-subtitle').textContent = 'Don\'t reveal the food!';
+            }
+            if (currentPlayer < numPlayers) { document.getElementById('next-btn').style.display = 'block'; }
+            else { document.getElementById('start-round-btn').style.display = 'block'; }
+        }
+
+        function nextPlayer() { currentPlayer++; updatePlayerDisplay(); }
+
+        function startRound() {
+            document.getElementById('player-screen').classList.remove('active');
+            document.getElementById('reveal-screen').classList.add('active');
+            document.getElementById('final-location').textContent = secretLocation;
+            document.getElementById('spy-number').textContent = playerNames[spyPlayer - 1];
+            const locationList = document.getElementById('all-locations');
+            locationList.innerHTML = '';
+            locations.forEach(loc => { const div = document.createElement('div'); div.className = 'location-item'; div.textContent = loc; locationList.appendChild(div); });
+            startTimer();
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                document.getElementById('timer').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                if (timeLeft <= 0) { clearInterval(timerInterval); document.getElementById('timer').textContent = 'Time\'s Up!'; document.getElementById('timer').style.color = '#f56565'; }
+            }, 1000);
+        }
+
+        function startVoting() {
+            clearInterval(timerInterval); currentVoter = 0;
+            document.getElementById('reveal-screen').classList.remove('active');
+            document.getElementById('voting-screen').classList.add('active');
+            showVotingForPlayer();
+        }
+
+        function showVotingForPlayer() {
+            if (currentVoter >= numPlayers) { showResults(); return; }
+            document.getElementById('voting-player').textContent = playerNames[currentVoter];
+            const voteButtons = document.getElementById('vote-buttons');
+            voteButtons.innerHTML = '';
+            playerNames.forEach((name, index) => { const btn = document.createElement('button'); btn.className = 'vote-btn'; btn.textContent = name; btn.onclick = () => castVote(index + 1); voteButtons.appendChild(btn); });
+        }
+
+        function castVote(votedPlayer) { votes[playerNames[currentVoter]] = votedPlayer; currentVoter++; showVotingForPlayer(); }
+
+        function showResults() {
+            let correctVoters = [], wrongVoters = [];
+            Object.keys(votes).forEach(voterName => {
+                if (votes[voterName] === spyPlayer) { playerScores[voterName] += 50; correctVoters.push(voterName); }
+                else { wrongVoters.push(voterName); }
+            });
+            document.getElementById('voting-screen').classList.remove('active');
+            document.getElementById('results-screen').classList.add('active');
+            document.getElementById('results-spy').textContent = playerNames[spyPlayer - 1];
+            document.getElementById('correct-votes').textContent = correctVoters.length > 0 ? `✅ Correct: ${correctVoters.join(', ')} (+50 pts each)` : '❌ No one guessed correctly!';
+            document.getElementById('wrong-votes').textContent = wrongVoters.length > 0 ? `Wrong: ${wrongVoters.join(', ')}` : '';
+            const scoreList = document.getElementById('score-list');
+            scoreList.innerHTML = '';
+            Object.keys(playerScores).sort((a, b) => playerScores[b] - playerScores[a]).forEach((name, index) => {
+                const div = document.createElement('div'); div.className = 'score-item';
+                if (index === 0) div.classList.add('winner');
+                div.innerHTML = `<span>${name}</span><span>${playerScores[name]} points</span>`;
+                scoreList.appendChild(div);
+            });
+        }
+
+        function playAgain() { startNewRound(); }
+    </script>
+</body>
+</html
