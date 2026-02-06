@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Spy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 20px;
+}
+
+.container {
+    max-width: 1200px;
+    width: 100%;
+}
+
+h1 {
+    text-align: center;
+    color: white;
+    font-size: 2.8em;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    text-align: center;
+    color: rgba(255,255,255,0.7);
+    font-size: 1.1em;
+    margin-bottom: 40px;
+}
+
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.service-card {
+    background: white;
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+}
+
+.service-card:hover {
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    border-color: #1e3c72;
+    transform: translateY(-4px);
+}
+
+.service-icon {
+    width: 100%;
+    height: 200px;
+    margin-bottom: 15px;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.service-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.service-card:hover .service-icon img {
+    opacity: 0.8;
+}
+
+.service-card h3 {
+    color: #1e3c72;
+    margin-bottom: 8px;
+    font-size: 1.4em;
+    text-transform: capitalize;
+}
+
+.service-card p {
+    color: #718096;
+    font-size: 0.95em;
+}
+
+@media (max-width: 1024px) {
+    .services-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .services-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🕵️ Spy Game</h1>
+    <p class="subtitle">Choose a category to play!</p>
+
+    <div class="services-grid">
+
+        <div class="service-card" onclick="window.location.href='spy.html'">
+            <div class="service-icon">
+                <img src="5.webp" alt="Locations">
+            </div>
+            <h3>Locations</h3>
+            <p>This category has places only.</p>
+        </div>
+
+        <div class="service-card" onclick="window.location.href='random.html'">
+            <div class="service-icon">
+                <img src="images.jfif" alt="Random">
+            </div>
+            <h3>Random</h3>
+            <p>This category has a lot of random items.</p>
+        </div>
+
+        <div class="service-card" onclick="window.location.href='jobs.html'">
+            <div class="service-icon">
+                <img src="j.webp" alt="Jobs">
+            </div>
+            <h3>Jobs</h3>
+            <p>This category has jobs only.</p>
+        </div>
+
+        <div class="service-card" onclick="window.location.href='food.html'">
+            <div class="service-icon">
+                <img src="WhatsApp Image 2026-01-30 at 3.57.29 PM.jpeg" alt="Foods">
+            </div>
+            <h3>Foods</h3>
+            <p>This category has a lot of foods.</p>
+        </div>
+   
+<div class="service-card" onclick="window.location.href='players.html'">
+            <div class="service-icon">
+                <img src="2.png" alt="Players">
+            </div>
+            <h3>Players</h3>
+            <p>This category has a lot of football players.</p>
+        </div>
+</div>
+</body>
+</html>

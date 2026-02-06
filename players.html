@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spy Game - Football Players</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .container { background: white; border-radius: 20px; padding: 40px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); max-width: 600px; width: 100%; }
+        h1 { text-align: center; color: #1e3c72; margin-bottom: 10px; font-size: 2.5em; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 30px; font-size: 1.1em; }
+        .setup-screen, .name-screen, .player-screen, .reveal-screen, .voting-screen, .spy-guess-screen, .results-screen { display: none; }
+        .active { display: block !important; }
+        input { width: 100%; padding: 15px; font-size: 1.2em; border: 2px solid #1e3c72; border-radius: 10px; text-align: center; margin-top: 10px; }
+        .btn { width: 100%; padding: 18px; font-size: 1.3em; font-weight: bold; background: #1e3c72; color: white; border: none; border-radius: 12px; cursor: pointer; margin-top: 20px; transition: all 0.3s; }
+        .btn:hover { background: #2a5298; transform: translateY(-2px); }
+        .btn-secondary { background: #48bb78; }
+        .btn-danger { background: #f56565; }
+        .role-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; border-radius: 15px; text-align: center; margin: 30px 0; color: white; }
+        .role-card.spy { background: linear-gradient(135deg, #f56565 0%, #c53030 100%); }
+        .hidden-card { background: #333; padding: 60px; border-radius: 15px; text-align: center; margin: 30px 0; cursor: pointer; color: white; }
+        .timer { text-align: center; font-size: 2.5em; font-weight: bold; color: #1e3c72; margin: 20px 0; }
+        .location-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin: 20px 0; max-height: 200px; overflow-y: auto; padding: 10px; background: #f0f0f0; border-radius: 10px; }
+        .location-item { padding: 8px; background: white; border-radius: 5px; text-align: center; font-size: 0.85em; border: 1px solid #ddd; }
+        .vote-buttons, .guess-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .score-item { display: flex; justify-content: space-between; padding: 12px; margin: 8px 0; background: #f7fafc; border-radius: 8px; }
+        .winner { background: #48bb78; color: white; }
+        .summary-box { background: #f0f4f8; padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🕵️ Spy Game</h1>
+        <p class="subtitle">⚽ Football Players Edition!</p>
+
+        <div id="setup-screen" class="setup-screen active">
+            <label>How many players?</label>
+            <input type="number" id="player-input" min="3" max="50" value="3">
+            <button class="btn" onclick="startGame()">Set Up Team</button>
+        </div>
+
+        <div id="name-screen" class="name-screen">
+            <h2 style="text-align: center;">Player <span id="name-player-number">1</span></h2>
+            <input type="text" id="name-input" placeholder="Enter your name...">
+            <button class="btn" onclick="saveName()">Continue</button>
+        </div>
+
+        <div id="player-screen" class="player-screen">
+            <h2 id="current-player-name" style="text-align: center; color: #1e3c72;">Name</h2>
+            <div class="hidden-card" id="hidden-card" onclick="revealRole()">
+                <h3>Tap to reveal player</h3>
+            </div>
+            <div class="role-card" id="role-card" style="display: none;">
+                <h2 id="role-title"></h2>
+                <div id="role-location" style="font-size: 2.2em; font-weight: bold; margin: 15px 0;"></div>
+                <p id="role-subtitle"></p>
+            </div>
+            <button class="btn" id="next-btn" onclick="nextPlayer()" style="display: none;">Next Person</button>
+            <button class="btn btn-secondary" id="start-round-btn" onclick="startRound()" style="display: none;">Kick Off!</button>
+        </div>
+
+        <div id="reveal-screen" class="reveal-screen">
+            <div class="timer" id="timer">1:00</div>
+            <div class="location-list" id="all-locations"></div>
+            <button class="btn btn-danger" onclick="startVoting()">Full Time & Vote</button>
+        </div>
+
+        <div id="voting-screen" class="voting-screen">
+            <h2 style="text-align: center;">Voter: <span id="voting-player" style="color: #1e3c72;"></span></h2>
+            <div class="vote-buttons" id="vote-buttons"></div>
+        </div>
+
+        <div id="spy-guess-screen" class="spy-guess-screen">
+            <h2 style="text-align: center; color: #f56565;">Spy's Penalty Kick</h2>
+            <p style="text-align: center; margin-bottom: 15px;"><span id="spy-name-guess"></span>, guess the player:</p>
+            <div class="guess-buttons" id="guess-buttons"></div>
+        </div>
+
+        <div id="results-screen" class="results-screen">
+            <h2 style="text-align: center; margin-bottom: 20px;">Match Results</h2>
+            <div id="round-summary" class="summary-box"></div>
+            <div id="score-list"></div>
+            <button class="btn btn-secondary" onclick="playAgain()">Rematch</button>
+            <button class="btn" onclick="location.reload()">Reset Scores</button>
+        </div>
+    </div>
+
+    <script>
+        const locations = ['Lionel Messi', 'Cristiano Ronaldo', 'Pelé', 'Diego Maradona', 'Zinedine Zidane', 'Neymar Jr', 'Kylian Mbappé', 'Erling Haaland', 'Ronaldinho', 'Ronaldo Nazário', 'Johan Cruyff', 'Luka Modrić', 'Karim Benzema', 'Kevin De Bruyne', 'Robert Lewandowski', 'Mohamed Salah', 'Zlatan Ibrahimović', 'Thierry Henry', 'David Beckham', 'Luis Suárez', 'Andrés Iniesta', 'Xavi', 'Sergio Ramos', 'Gianluigi Buffon', 'Manuel Neuer', 'Harry Kane', 'Vinícius Júnior', 'Antoine Griezmann', 'Sadio Mané', 'Virgil van Dijk', 'Wayne Rooney', 'Steven Gerrard', 'Frank Lampard', 'Kaká', 'Andrea Pirlo', 'Gareth Bale', 'Paolo Maldini', 'Franz Beckenbauer', 'George Best', 'Eusébio', 'Roberto Carlos', 'Cafu', 'Toni Kroos', 'Thomas Müller', 'Pedri', 'Jude Bellingham', 'Phil Foden', 'Bukayo Saka', 'Son Heung-min', 'Alphonso Davies'];
+        
+        let numPlayers, spyIndex, secretLocation, timerInterval;
+        let playerNames = [];
+        let playerScores = {};
+        let votes = {};
+        let currentPlayerIdx = 0;
+        let voterIdx = 0;
+
+        function showScreen(id) {
+            document.querySelectorAll('.container > div').forEach(div => div.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function startGame() {
+            numPlayers = parseInt(document.getElementById('player-input').value);
+            playerNames = [];
+            showScreen('name-screen');
+            document.getElementById('name-input').focus();
+        }
+
+        function saveName() {
+            const input = document.getElementById('name-input');
+            const name = input.value.trim();
+            if (!name) return alert("Enter name!");
+            playerNames.push(name);
+            playerScores[name] = playerScores[name] || 0;
+            if (playerNames.length < numPlayers) {
+                document.getElementById('name-player-number').textContent = playerNames.length + 1;
+                input.value = ""; input.focus();
+            } else { setupRound(); }
+        }
+
+        function setupRound() {
+            spyIndex = Math.floor(Math.random() * numPlayers);
+            secretLocation = locations[Math.floor(Math.random() * locations.length)];
+            currentPlayerIdx = 0;
+            showPlayerTurn();
+        }
+
+        function showPlayerTurn() {
+            showScreen('player-screen');
+            document.getElementById('current-player-name').textContent = playerNames[currentPlayerIdx];
+            document.getElementById('hidden-card').style.display = 'block';
+            document.getElementById('role-card').style.display = 'none';
+            document.getElementById('next-btn').style.display = 'none';
+            document.getElementById('start-round-btn').style.display = 'none';
+        }
+
+        function revealRole() {
+            const isSpy = currentPlayerIdx === spyIndex;
+            const card = document.getElementById('role-card');
+            document.getElementById('hidden-card').style.display = 'none';
+            card.style.display = 'block';
+            card.className = isSpy ? 'role-card spy' : 'role-card';
+            document.getElementById('role-title').textContent = isSpy ? "🕵️ YOU ARE THE SPY" : "✅ TEAM CITIZEN";
+            document.getElementById('role-location').textContent = isSpy ? "???" : secretLocation;
+            document.getElementById('role-subtitle').textContent = isSpy ? "Guess the player name!" : "Defend the secret!";
+            if (currentPlayerIdx < numPlayers - 1) { document.getElementById('next-btn').style.display = 'block'; }
+            else { document.getElementById('start-round-btn').style.display = 'block'; }
+        }
+
+        function nextPlayer() { currentPlayerIdx++; showPlayerTurn(); }
+
+        function startRound() {
+            showScreen('reveal-screen');
+            document.getElementById('all-locations').innerHTML = locations.map(l => `<div class="location-item">${l}</div>`).join('');
+            let timeLeft = 60;
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').textContent = `0:${timeLeft.toString().padStart(2, '0')}`;
+                if (timeLeft <= 0) clearInterval(timerInterval);
+            }, 1000);
+        }
+
+        function startVoting() {
+            clearInterval(timerInterval);
+            voterIdx = 0; votes = {};
+            showVotingTurn();
+        }
+
+        function showVotingTurn() {
+            showScreen('voting-screen');
+            document.getElementById('voting-player').textContent = playerNames[voterIdx];
+            const btns = document.getElementById('vote-buttons');
+            btns.innerHTML = '';
+            playerNames.forEach((name, idx) => {
+                if(idx === voterIdx) return;
+                const b = document.createElement('button');
+                b.className = 'btn'; b.textContent = name;
+                b.onclick = () => { votes[playerNames[voterIdx]] = idx; voterIdx++; if(voterIdx < numPlayers) showVotingTurn(); else showSpyGuess(); };
+                btns.appendChild(b);
+            });
+        }
+
+        function showSpyGuess() {
+            showScreen('spy-guess-screen');
+            document.getElementById('spy-name-guess').textContent = playerNames[spyIndex];
+            const btns = document.getElementById('guess-buttons');
+            let options = [secretLocation];
+            while(options.length < 4) {
+                let r = locations[Math.floor(Math.random() * locations.length)];
+                if(!options.includes(r)) options.push(r);
+            }
+            options.sort(() => Math.random() - 0.5);
+            btns.innerHTML = options.map(opt => `<button class="btn" onclick="processResults(${opt === secretLocation})">${opt}</button>`).join('');
+        }
+
+        function processResults(spyWin) {
+            let spyName = playerNames[spyIndex];
+            let summary = `The Spy was: <b>${spyName}</b><br>Secret Player: <b>${secretLocation}</b><br><br>`;
+            
+            if(spyWin) { 
+                playerScores[spyName] += 50; 
+                summary += `🎯 GOAL! Spy guessed right! (+50 pts)<br>`; 
+            }
+            
+            let catchers = [];
+            for(let v in votes) { 
+                if(votes[v] === spyIndex) { 
+                    playerScores[v] += 50; 
+                    catchers.push(v); 
+                } 
+            }
+            summary += catchers.length > 0 ? `🧤 Saved! Caught by: ${catchers.join(', ')} (+50 pts)` : `⚽ The spy scored and escaped!`;
+            
+            document.getElementById('round-summary').innerHTML = summary;
+            document.getElementById('score-list').innerHTML = Object.entries(playerScores).sort((a,b)=>b[1]-a[1]).map(([n,s],i)=>`<div class="score-item ${i===0?'winner':''}"><span>${n}</span><span>${s} pts</span></div>`).join('');
+            showScreen('results-screen');
+        }
+
+        function playAgain() { setupRound(); }
+    </script>
+</body>
+</html>
