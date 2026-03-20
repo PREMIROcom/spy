@@ -44,7 +44,8 @@
             font-size: 1.1em;
         }
 
-        .setup-screen, .name-screen, .player-screen, .reveal-screen, .question-screen, .voting-screen, .spy-guess-screen, .results-screen {
+        /* SCREEN MANAGEMENT */
+        .setup-screen, .name-screen, .player-screen, .question-screen, .reveal-screen, .voting-screen, .spy-guess-screen, .results-screen {
             display: none;
         }
 
@@ -120,17 +121,18 @@
             color: white;
         }
 
-        /* NEW QUESTION STYLES */
+        /* QUESTION PHASE STYLES */
         .q-box {
             background: #f0f4f8;
             padding: 30px;
             border-radius: 15px;
             text-align: center;
             margin: 20px 0;
-            border: 3px dashed #1e3c72;
+            border: 4px dashed #1e3c72;
         }
-        .asker { color: #2b6cb0; font-weight: bold; font-size: 1.5em; }
-        .target { color: #c53030; font-weight: bold; font-size: 1.5em; }
+        .asker { color: #2b6cb0; font-weight: bold; font-size: 1.8em; display: block; }
+        .target { color: #c53030; font-weight: bold; font-size: 1.8em; display: block; }
+        .vs-text { margin: 10px 0; font-size: 1.1em; color: #555; font-weight: bold; text-transform: uppercase; }
 
         .timer {
             text-align: center;
@@ -196,7 +198,7 @@
 <body>
     <div class="container">
         <h1>🕵️ Spy Game</h1>
-        <p class="subtitle">🎲 Random Edition</p>
+        <p class="subtitle">🎲 Interrogation Edition</p>
 
         <div id="setup-screen" class="setup-screen active">
             <div class="player-count">
@@ -230,20 +232,19 @@
         </div>
 
         <div id="question-screen" class="question-screen">
-            <h2 style="text-align: center;">Interrogation Phase</h2>
+            <h2 style="text-align: center; color: #1e3c72;">Interrogation Phase</h2>
             <div class="q-box">
-                <p style="margin-bottom: 10px; color: #666;">It's time to talk!</p>
                 <span class="asker" id="asker-name"></span> 
-                <div style="margin: 10px 0; font-weight: bold; color: #333;">asks</div>
+                <div class="vs-text">Must ask a question to</div>
                 <span class="target" id="target-name"></span>
             </div>
-            <p id="q-progress" style="text-align: center; color: #666; font-size: 0.9em;"></p>
+            <p id="q-progress" style="text-align: center; color: #666;"></p>
             <button class="btn" onclick="nextQuestion()">Next Question</button>
         </div>
 
         <div id="reveal-screen" class="reveal-screen">
             <div class="timer" id="timer">1:00</div>
-            <p style="text-align: center; color: #666;">Last chance to discuss! Items:</p>
+            <p style="text-align: center; color: #666;">Final Discussion! Locations:</p>
             <div class="location-list" id="all-locations"></div>
             <button class="btn btn-danger" onclick="startVoting()">End Timer & Vote</button>
         </div>
@@ -351,20 +352,17 @@
             showPlayerTurn();
         }
 
-        // --- NEW: QUESTION SYSTEM LOGIC ---
+        // QUESTION SYSTEM LOGIC
         function startQuestioning() {
             questionPairs = [];
-            let players = [...playerNames];
-            
-            // Create pairs: Player 0 asks Player 1, Player 1 asks Player 2, etc.
-            for(let i = 0; i < players.length; i++) {
+            // Pairs everyone so everyone asks and is asked
+            for(let i = 0; i < playerNames.length; i++) {
                 questionPairs.push({
-                    asker: players[i],
-                    target: players[(i + 1) % players.length]
+                    asker: playerNames[i],
+                    target: playerNames[(i + 1) % playerNames.length]
                 });
             }
-            
-            // Shuffle the order of questions
+            // Shuffle question order
             questionPairs.sort(() => Math.random() - 0.5);
             currentQIdx = 0;
             showQuestion();
@@ -375,7 +373,7 @@
             const pair = questionPairs[currentQIdx];
             document.getElementById('asker-name').textContent = pair.asker;
             document.getElementById('target-name').textContent = pair.target;
-            document.getElementById('q-progress').textContent = `Question ${currentQIdx + 1} of ${questionPairs.length}`;
+            document.getElementById('q-progress').textContent = `Round ${currentQIdx + 1} of ${questionPairs.length}`;
         }
 
         function nextQuestion() {
@@ -383,10 +381,9 @@
             if (currentQIdx < questionPairs.length) {
                 showQuestion();
             } else {
-                startRound(); // Proceed to the final discussion timer
+                startRound(); // Go to final timer after everyone asks
             }
         }
-        // ----------------------------------
 
         function startRound() {
             showScreen('reveal-screen');
