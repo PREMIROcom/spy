@@ -20,7 +20,10 @@
         .btn:hover { background: #2a5298; transform: translateY(-2px); }
         .btn-secondary { background: #48bb78; }
         .btn-danger { background: #f56565; }
-        .btn-hint { background: #ed8936; margin-bottom: 10px; font-size: 1em; padding: 10px; }
+        
+        /* Hint Button Styling */
+        .btn-hint { background: #ed8936; margin-bottom: 15px; font-size: 1em; padding: 12px; box-shadow: 0 4px 0 #c05621; }
+        .btn-hint:active { transform: translateY(2px); box-shadow: none; }
 
         .role-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; border-radius: 15px; text-align: center; margin: 30px 0; color: white; display: flex; flex-direction: column; justify-content: center; }
         .role-card.spy { background: linear-gradient(135deg, #f56565 0%, #c53030 100%); }
@@ -35,9 +38,9 @@
         .location-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin: 20px 0; max-height: 250px; overflow-y: auto; background: #f7fafc; padding: 15px; border-radius: 10px; }
         .location-item { padding: 8px; background: white; border-radius: 5px; text-align: center; font-size: 0.9em; border: 1px solid #ddd; }
 
-        /* Hard Mode Grid */
-        .guess-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 20px; }
-        .guess-buttons .btn { padding: 12px 5px; font-size: 0.9em; margin-top: 0; }
+        /* Hard Mode Guess Grid (12 Options) */
+        .guess-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+        .guess-buttons .btn { padding: 15px 5px; font-size: 0.85em; margin-top: 0; min-height: 60px; display: flex; align-items: center; justify-content: center; line-height: 1.2; }
 
         .vote-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
         .score-item { display: flex; justify-content: space-between; padding: 12px; margin: 8px 0; background: #f7fafc; border-radius: 8px; }
@@ -48,7 +51,7 @@
 <body>
     <div class="container">
         <h1>🕵️ Spy Game</h1>
-        <p class="subtitle">🎲 Perfect Interrogation</p>
+        <p class="subtitle">🎲 Perfect Edition</p>
 
         <div id="setup-screen" class="setup-screen active">
             <div class="player-count">
@@ -61,7 +64,7 @@
         <div id="name-screen" class="name-screen">
             <h2 style="text-align: center;">Player <span id="name-player-number">1</span></h2>
             <div class="name-input-container">
-                <input type="text" id="name-input" placeholder="Enter your name...">
+                <input type="text" id="name-input" placeholder="Enter name...">
             </div>
             <button class="btn" onclick="saveName()">Continue</button>
         </div>
@@ -70,7 +73,7 @@
             <h2 id="current-player-name" style="text-align: center; color: #1e3c72;">Name</h2>
             <div class="hidden-card" id="hidden-card" onclick="revealRole()">
                 <h3>Tap to see role</h3>
-                <p style="font-size: 0.8em; margin-top: 10px; opacity: 0.7;">Make sure no one is looking!</p>
+                <p style="font-size: 0.8em; margin-top: 10px; opacity: 0.7;">Keep it secret!</p>
             </div>
             <div class="role-card" id="role-card" style="display: none;">
                 <h2 id="role-title"></h2>
@@ -82,10 +85,10 @@
         </div>
 
         <div id="interrogation-screen" class="interrogation-screen">
-            <h2 style="text-align: center; color: #1e3c72;">Interrogation Phase</h2>
+            <h2 style="text-align: center; color: #1e3c72;">Questioning Phase</h2>
             <div class="q-box">
                 <span class="q-name asker" id="asker-name"></span>
-                <p style="margin: 10px 0; font-weight: bold; color: #555;">Must ask a question to:</p>
+                <p style="margin: 10px 0; font-weight: bold; color: #555;">Ask a question to:</p>
                 <span class="q-name target" id="target-name"></span>
             </div>
             <p id="q-progress" style="text-align: center; color: #666;"></p>
@@ -116,7 +119,7 @@
             <div id="round-summary" class="summary-box"></div>
             <div id="score-list"></div>
             <button class="btn btn-secondary" onclick="playAgain()">Next Round</button>
-            <button class="btn" onclick="location.reload()">Reset All</button>
+            <button class="btn" onclick="location.reload()">Reset All Scores</button>
         </div>
     </div>
 
@@ -125,7 +128,7 @@
         
         let numPlayers, spyIndex, secretLocation, timerInterval;
         let playerNames = [], playerScores = {}, votes = {}, currentPlayerIdx = 0, voterIdx = 0, questionPairs = [], currentQIdx = 0;
-        let spyUsedHint = false;
+        let spyUsedHint = false, currentOptions = [];
 
         function showScreen(id) {
             document.querySelectorAll('.container > div').forEach(div => div.classList.remove('active'));
@@ -137,28 +140,25 @@
             if(numPlayers < 3) return alert("Minimum 3 players!");
             playerNames = [];
             showScreen('name-screen');
+            document.getElementById('name-input').focus();
         }
 
         function saveName() {
             const input = document.getElementById('name-input');
             const name = input.value.trim();
-            if (!name || playerNames.includes(name)) return alert("Invalid name!");
+            if (!name || playerNames.includes(name)) return alert("Enter a unique name!");
             playerNames.push(name);
             playerScores[name] = playerScores[name] || 0;
             if (playerNames.length < numPlayers) {
                 document.getElementById('name-player-number').textContent = playerNames.length + 1;
-                input.value = "";
-                input.focus();
-            } else {
-                setupRound();
-            }
+                input.value = ""; input.focus();
+            } else { setupRound(); }
         }
 
         function setupRound() {
             spyIndex = Math.floor(Math.random() * numPlayers);
             secretLocation = locations[Math.floor(Math.random() * locations.length)];
-            currentPlayerIdx = 0;
-            spyUsedHint = false;
+            currentPlayerIdx = 0; spyUsedHint = false;
             showPlayerTurn();
         }
 
@@ -193,8 +193,7 @@
                 }
             }
             questionPairs.sort(() => Math.random() - 0.5);
-            currentQIdx = 0;
-            showInterrogationTurn();
+            currentQIdx = 0; showInterrogationTurn();
         }
 
         function showInterrogationTurn() {
@@ -202,7 +201,7 @@
             const currentPair = questionPairs[currentQIdx];
             document.getElementById('asker-name').textContent = currentPair.asker;
             document.getElementById('target-name').textContent = currentPair.target;
-            document.getElementById('q-progress').textContent = `Question Turn ${currentQIdx + 1} of ${questionPairs.length}`;
+            document.getElementById('q-progress').textContent = `Question ${currentQIdx + 1} of ${questionPairs.length}`;
         }
 
         function nextQuestion() {
@@ -234,8 +233,7 @@
             playerNames.forEach((name, idx) => {
                 if(idx === voterIdx) return;
                 const b = document.createElement('button');
-                b.className = 'btn';
-                b.textContent = name;
+                b.className = 'btn'; b.textContent = name;
                 b.onclick = () => {
                     votes[playerNames[voterIdx]] = idx;
                     voterIdx++;
@@ -246,14 +244,12 @@
             });
         }
 
-        // --- HARD MODE SPY GUESS SYSTEM ---
-        let currentOptions = [];
-
         function showSpyGuess() {
             showScreen('spy-guess-screen');
             document.getElementById('spy-name-guess').textContent = playerNames[spyIndex];
             document.getElementById('hint-btn').style.display = 'block';
             
+            // Hard Mode: 12 Options
             currentOptions = [secretLocation];
             while(currentOptions.length < 12) {
                 let r = locations[Math.floor(Math.random() * locations.length)];
@@ -268,8 +264,7 @@
             let shuffled = [...currentOptions].sort(() => Math.random() - 0.5);
             shuffled.forEach(opt => {
                 const b = document.createElement('button');
-                b.className = 'btn';
-                b.textContent = opt;
+                b.className = 'btn'; b.textContent = opt;
                 b.onclick = () => processResults(opt === secretLocation);
                 btns.appendChild(b);
             });
@@ -279,13 +274,9 @@
             if(spyUsedHint) return;
             spyUsedHint = true;
             document.getElementById('hint-btn').style.display = 'none';
-            // Remove 4 wrong options
-            let countRemoved = 0;
+            let removed = 0;
             currentOptions = currentOptions.filter(opt => {
-                if(opt !== secretLocation && countRemoved < 4) {
-                    countRemoved++;
-                    return false;
-                }
+                if(opt !== secretLocation && removed < 4) { removed++; return false; }
                 return true;
             });
             renderGuessButtons();
@@ -293,24 +284,19 @@
 
         function processResults(spyGuessedRight) {
             let spyName = playerNames[spyIndex];
-            let summary = `The Spy was <b>${spyName}</b>!<br>Secret item: <b>${secretLocation}</b>.<br><br>`;
+            let summary = `Spy: <b>${spyName}</b> | Secret item: <b>${secretLocation}</b>.<br><br>`;
             
             if(spyGuessedRight) {
-                let scoreGain = spyUsedHint ? 30 : 50;
-                playerScores[spyName] += scoreGain;
-                summary += `🎯 <b>Spy Result:</b> Correct! (+${scoreGain} pts${spyUsedHint ? ' - used hint' : ''})<br>`;
-            } else {
-                summary += `❌ <b>Spy Result:</b> Wrong guess.<br>`;
-            }
+                let gain = spyUsedHint ? 30 : 50;
+                playerScores[spyName] += gain;
+                summary += `🎯 <b>Spy Wins:</b> Correct guess! (+${gain} pts)<br>`;
+            } else { summary += `❌ <b>Spy Lost:</b> Wrong guess.<br>`; }
 
             let catchers = [];
             for(let voter in votes) {
-                if(votes[voter] === spyIndex) {
-                    playerScores[voter] += 50;
-                    catchers.push(voter);
-                }
+                if(votes[voter] === spyIndex) { playerScores[voter] += 50; catchers.push(voter); }
             }
-            summary += catchers.length > 0 ? `✅ <b>Citizens:</b> ${catchers.join(', ')} caught them! (+50 pts)` : `❌ <b>Citizens:</b> Nobody caught the spy!`;
+            summary += catchers.length > 0 ? `✅ <b>Citizens:</b> ${catchers.join(', ')} caught them! (+50 pts)` : `❌ <b>Citizens:</b> Failed to catch the spy!`;
             
             document.getElementById('round-summary').innerHTML = summary;
             const list = document.getElementById('score-list');
