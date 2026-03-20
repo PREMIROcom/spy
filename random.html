@@ -44,7 +44,7 @@
             font-size: 1.1em;
         }
 
-        .setup-screen, .name-screen, .player-screen, .reveal-screen, .voting-screen, .spy-guess-screen, .results-screen {
+        .setup-screen, .name-screen, .player-screen, .reveal-screen, .question-screen, .voting-screen, .spy-guess-screen, .results-screen {
             display: none;
         }
 
@@ -119,6 +119,18 @@
             cursor: pointer;
             color: white;
         }
+
+        /* NEW QUESTION STYLES */
+        .q-box {
+            background: #f0f4f8;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 20px 0;
+            border: 3px dashed #1e3c72;
+        }
+        .asker { color: #2b6cb0; font-weight: bold; font-size: 1.5em; }
+        .target { color: #c53030; font-weight: bold; font-size: 1.5em; }
 
         .timer {
             text-align: center;
@@ -214,12 +226,24 @@
                 <p id="role-subtitle"></p>
             </div>
             <button class="btn" id="next-btn" onclick="nextPlayer()" style="display: none;">Next Player</button>
-            <button class="btn btn-secondary" id="start-round-btn" onclick="startRound()" style="display: none;">Start Round!</button>
+            <button class="btn btn-secondary" id="start-round-btn" onclick="startQuestioning()" style="display: none;">Start Questions!</button>
+        </div>
+
+        <div id="question-screen" class="question-screen">
+            <h2 style="text-align: center;">Interrogation Phase</h2>
+            <div class="q-box">
+                <p style="margin-bottom: 10px; color: #666;">It's time to talk!</p>
+                <span class="asker" id="asker-name"></span> 
+                <div style="margin: 10px 0; font-weight: bold; color: #333;">asks</div>
+                <span class="target" id="target-name"></span>
+            </div>
+            <p id="q-progress" style="text-align: center; color: #666; font-size: 0.9em;"></p>
+            <button class="btn" onclick="nextQuestion()">Next Question</button>
         </div>
 
         <div id="reveal-screen" class="reveal-screen">
             <div class="timer" id="timer">1:00</div>
-            <p style="text-align: center; color: #666;">Ask questions! Here are the possibilities:</p>
+            <p style="text-align: center; color: #666;">Last chance to discuss! Items:</p>
             <div class="location-list" id="all-locations"></div>
             <button class="btn btn-danger" onclick="startVoting()">End Timer & Vote</button>
         </div>
@@ -254,6 +278,8 @@
         let votes = {};
         let currentPlayerIdx = 0;
         let voterIdx = 0;
+        let questionPairs = [];
+        let currentQIdx = 0;
 
         function showScreen(id) {
             document.querySelectorAll('.container > div').forEach(div => div.classList.remove('active'));
@@ -325,6 +351,43 @@
             showPlayerTurn();
         }
 
+        // --- NEW: QUESTION SYSTEM LOGIC ---
+        function startQuestioning() {
+            questionPairs = [];
+            let players = [...playerNames];
+            
+            // Create pairs: Player 0 asks Player 1, Player 1 asks Player 2, etc.
+            for(let i = 0; i < players.length; i++) {
+                questionPairs.push({
+                    asker: players[i],
+                    target: players[(i + 1) % players.length]
+                });
+            }
+            
+            // Shuffle the order of questions
+            questionPairs.sort(() => Math.random() - 0.5);
+            currentQIdx = 0;
+            showQuestion();
+        }
+
+        function showQuestion() {
+            showScreen('question-screen');
+            const pair = questionPairs[currentQIdx];
+            document.getElementById('asker-name').textContent = pair.asker;
+            document.getElementById('target-name').textContent = pair.target;
+            document.getElementById('q-progress').textContent = `Question ${currentQIdx + 1} of ${questionPairs.length}`;
+        }
+
+        function nextQuestion() {
+            currentQIdx++;
+            if (currentQIdx < questionPairs.length) {
+                showQuestion();
+            } else {
+                startRound(); // Proceed to the final discussion timer
+            }
+        }
+        // ----------------------------------
+
         function startRound() {
             showScreen('reveal-screen');
             const list = document.getElementById('all-locations');
@@ -360,7 +423,7 @@
             btns.innerHTML = '';
             
             playerNames.forEach((name, idx) => {
-                if(idx === voterIdx) return; // Prevent self-voting
+                if(idx === voterIdx) return;
                 const b = document.createElement('button');
                 b.className = 'btn';
                 b.textContent = name;
@@ -402,7 +465,7 @@
             summary += `The secret item was <b>${secretLocation}</b>.<br><br>`;
             
             if(spyGuessedRight) {
-                playerScores[spyName] += 50; // Spy gets 50 points
+                playerScores[spyName] += 50;
                 summary += `🎯 <b>Spy Result:</b> Correct guess! (+50 pts)<br>`;
             } else {
                 summary += `❌ <b>Spy Result:</b> Wrong guess.<br>`;
@@ -411,7 +474,7 @@
             let catchers = [];
             for(let voter in votes) {
                 if(votes[voter] === spyIndex) {
-                    playerScores[voter] += 50; // Citizens get 50 for catching spy
+                    playerScores[voter] += 50;
                     catchers.push(voter);
                 }
             }
