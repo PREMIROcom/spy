@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spy Game - Full Interrogation</title>
+    <title>Spy Game - Perfect Question System</title>
     <style>
         * {
             margin: 0;
@@ -44,8 +44,7 @@
             font-size: 1.1em;
         }
 
-        /* All screens hidden by default */
-        .setup-screen, .name-screen, .player-screen, .question-screen, .reveal-screen, .voting-screen, .spy-guess-screen, .results-screen {
+        .setup-screen, .name-screen, .player-screen, .interrogation-screen, .reveal-screen, .voting-screen, .spy-guess-screen, .results-screen {
             display: none;
         }
 
@@ -123,16 +122,22 @@
 
         /* Question Phase Styling */
         .q-box {
-            background: #f0f4f8;
+            background: #f0f7ff;
             padding: 30px;
             border-radius: 15px;
-            text-align: center;
+            border: 3px dashed #1e3c72;
             margin: 20px 0;
-            border: 4px dashed #1e3c72;
+            text-align: center;
         }
-        .asker { color: #2b6cb0; font-weight: bold; font-size: 1.8em; display: block; }
-        .target { color: #c53030; font-weight: bold; font-size: 1.8em; display: block; }
-        .vs-text { margin: 10px 0; font-size: 1.1em; color: #555; font-weight: bold; text-transform: uppercase; }
+
+        .q-name {
+            font-size: 1.8em;
+            font-weight: bold;
+            display: block;
+        }
+
+        .asker { color: #2b6cb0; }
+        .target { color: #c53030; }
 
         .timer {
             text-align: center;
@@ -198,7 +203,7 @@
 <body>
     <div class="container">
         <h1>🕵️ Spy Game</h1>
-        <p class="subtitle">🎲 Interrogation Edition</p>
+        <p class="subtitle">🎲 Perfect Interrogation</p>
 
         <div id="setup-screen" class="setup-screen active">
             <div class="player-count">
@@ -228,23 +233,23 @@
                 <p id="role-subtitle"></p>
             </div>
             <button class="btn" id="next-btn" onclick="nextPlayer()" style="display: none;">Next Player</button>
-            <button class="btn btn-secondary" id="start-round-btn" onclick="startQuestioning()" style="display: none;">Start Questions!</button>
+            <button class="btn btn-secondary" id="start-interrogation-btn" onclick="prepareInterrogation()" style="display: none;">Start Interrogation!</button>
         </div>
 
-        <div id="question-screen" class="question-screen">
-            <h2 style="text-align: center; color: #1e3c72;">Interrogation</h2>
+        <div id="interrogation-screen" class="interrogation-screen">
+            <h2 style="text-align: center; color: #1e3c72;">Interrogation Phase</h2>
             <div class="q-box">
-                <span class="asker" id="asker-name"></span> 
-                <div class="vs-text">Must ask a question to</div>
-                <span class="target" id="target-name"></span>
+                <span class="q-name asker" id="asker-name"></span>
+                <p style="margin: 10px 0; font-weight: bold; color: #555;">Must ask a question to:</p>
+                <span class="q-name target" id="target-name"></span>
             </div>
             <p id="q-progress" style="text-align: center; color: #666;"></p>
-            <button class="btn" onclick="nextQuestion()">Next Pair</button>
+            <button class="btn" onclick="nextQuestion()">Next Turn</button>
         </div>
 
         <div id="reveal-screen" class="reveal-screen">
             <div class="timer" id="timer">1:00</div>
-            <p style="text-align: center; color: #666;">Final Debate! Possible items:</p>
+            <p style="text-align: center; color: #666;">Free discussion! Here are the items:</p>
             <div class="location-list" id="all-locations"></div>
             <button class="btn btn-danger" onclick="startVoting()">End Timer & Vote</button>
         </div>
@@ -326,7 +331,7 @@
             document.getElementById('hidden-card').style.display = 'block';
             document.getElementById('role-card').style.display = 'none';
             document.getElementById('next-btn').style.display = 'none';
-            document.getElementById('start-round-btn').style.display = 'none';
+            document.getElementById('start-interrogation-btn').style.display = 'none';
         }
 
         function revealRole() {
@@ -343,7 +348,7 @@
             if (currentPlayerIdx < numPlayers - 1) {
                 document.getElementById('next-btn').style.display = 'block';
             } else {
-                document.getElementById('start-round-btn').style.display = 'block';
+                document.getElementById('start-interrogation-btn').style.display = 'block';
             }
         }
 
@@ -352,40 +357,37 @@
             showPlayerTurn();
         }
 
-        // --- NEW LOGIC: EVERYONE ASKS EVERYONE ---
-        function startQuestioning() {
+        // PERFECT QUESTION SYSTEM LOGIC
+        function prepareInterrogation() {
             questionPairs = [];
-            // Create a list where every player asks every other player
+            // Generate every possible combination (All ask All)
             for (let i = 0; i < playerNames.length; i++) {
                 for (let j = 0; j < playerNames.length; j++) {
                     if (i !== j) {
-                        questionPairs.push({
-                            asker: playerNames[i],
-                            target: playerNames[j]
-                        });
+                        questionPairs.push({ asker: playerNames[i], target: playerNames[j] });
                     }
                 }
             }
-            // Shuffle the order so it's random
+            // Shuffle question order so it's not predictable
             questionPairs.sort(() => Math.random() - 0.5);
             currentQIdx = 0;
-            showQuestion();
+            showInterrogationTurn();
         }
 
-        function showQuestion() {
-            showScreen('question-screen');
-            const pair = questionPairs[currentQIdx];
-            document.getElementById('asker-name').textContent = pair.asker;
-            document.getElementById('target-name').textContent = pair.target;
-            document.getElementById('q-progress').textContent = `Question ${currentQIdx + 1} of ${questionPairs.length}`;
+        function showInterrogationTurn() {
+            showScreen('interrogation-screen');
+            const currentPair = questionPairs[currentQIdx];
+            document.getElementById('asker-name').textContent = currentPair.asker;
+            document.getElementById('target-name').textContent = currentPair.target;
+            document.getElementById('q-progress').textContent = `Question Turn ${currentQIdx + 1} of ${questionPairs.length}`;
         }
 
         function nextQuestion() {
             currentQIdx++;
             if (currentQIdx < questionPairs.length) {
-                showQuestion();
+                showInterrogationTurn();
             } else {
-                startRound(); // Proceed to the 1-minute timer
+                startRound(); // Proceed to general timer debate
             }
         }
 
@@ -466,7 +468,7 @@
             summary += `The secret item was <b>${secretLocation}</b>.<br><br>`;
             
             if(spyGuessedRight) {
-                playerScores[spyName] += 50; 
+                playerScores[spyName] += 50;
                 summary += `🎯 <b>Spy Result:</b> Correct guess! (+50 pts)<br>`;
             } else {
                 summary += `❌ <b>Spy Result:</b> Wrong guess.<br>`;
@@ -475,7 +477,7 @@
             let catchers = [];
             for(let voter in votes) {
                 if(votes[voter] === spyIndex) {
-                    playerScores[voter] += 50; 
+                    playerScores[voter] += 50;
                     catchers.push(voter);
                 }
             }
